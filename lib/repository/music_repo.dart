@@ -106,11 +106,31 @@ class MusicRepo {
     }
   }
 
+  static Future<List<Tracks>> getMultipleTopTrack(List<String> listId) async {
+    try {
+      List<Tracks> listTrack = [];
+
+      for (var i = 0; i < listId.length; i++) {
+        await getArtistTopTrack(listId[i]).then((value) {
+          if (value[0] == 200) {
+            List<Tracks> result = value[1];
+
+            listTrack.add(result.first);
+          }
+        });
+      }
+
+      return listTrack;
+    } catch (e) {
+      return [];
+    }
+  }
+
   static Future<dynamic> searchTrack(String content) async {
     try {
       String query = content.replaceAll(" ", "+");
 
-      final response = await _dio.get("search?q=$query&type=track&limit=1");
+      final response = await _dio.get("search?q=$query&type=track&limit=4");
 
       log("searchTrack: $response");
 

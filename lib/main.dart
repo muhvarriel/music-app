@@ -2,14 +2,12 @@ import 'package:music_app/ui/chat_home_screen.dart';
 import 'package:music_app/ui/widgets/button_widget.dart';
 import 'package:music_app/ui/widgets/custom_text.dart';
 import 'package:music_app/utils/app_navigators.dart';
-import 'package:music_app/repository/chat_provider.dart';
 import 'package:music_app/utils/constants.dart';
 import 'package:music_app/utils/music_storage.dart';
 import 'package:music_app/utils/shared_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,17 +18,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<ChatProvider>(create: (_) => ChatProvider()),
-      ],
-      child: GetMaterialApp(
-        title: 'ChatAI Messenger',
-        debugShowCheckedModeBanner: false,
-        theme: lightTheme,
-        darkTheme: darkTheme,
-        home: const SplashScreen(),
-      ),
+    return GetMaterialApp(
+      title: 'ChatAI Messenger',
+      debugShowCheckedModeBanner: false,
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      home: const SplashScreen(),
     );
   }
 }

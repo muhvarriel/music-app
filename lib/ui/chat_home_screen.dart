@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:audioplayers/audioplayers.dart';
+import 'package:music_app/model/track.dart';
 import 'package:music_app/repository/music_repo.dart';
 import 'package:music_app/ui/chat_music_screen.dart';
 import 'package:music_app/ui/widgets/custom_cached_image.dart';
@@ -26,6 +28,12 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
       TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  List<Tracks> listTrack = [];
+  List<Tracks> listSearch = [];
+
+  final player = AudioPlayer();
+  String? idPlayer;
+
   @override
   void initState() {
     init();
@@ -34,7 +42,40 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
 
   void init() async {
     await MusicRepo.musicLoaded();
+
+    await MusicRepo.getMultipleTopTrack(MusicStorage.listMusic
+            .map((e) => e.id ?? "")
+            .toList()
+            .getRange(0, 4)
+            .toList())
+        .then((value) {
+      if (mounted) {
+        setState(() {
+          listTrack = value;
+        });
+      }
+    });
     setState(() {});
+  }
+
+  Future<void> getSearchTrack(String query) async {
+    await MusicRepo.searchTrack(query).then((value) {
+      if (value[0] == 200) {
+        if (mounted) {
+          TracksResponse result = value[1];
+
+          setState(() {
+            listSearch = result.items ?? [];
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    player.dispose();
   }
 
   @override
@@ -97,21 +138,22 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-                          GestureDetector(
-                            onTap: () async {
-                              HapticFeedback.lightImpact();
-                            },
-                            child: Container(
-                                padding: const EdgeInsets.all(10),
-                                margin: const EdgeInsets.only(left: 10),
-                                decoration: BoxDecoration(
-                                    color: Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(10)),
-                                child: const Icon(
-                                  Icons.music_note_rounded,
-                                  size: 18,
-                                )),
-                          ),
+                          if (false)
+                            GestureDetector(
+                              onTap: () async {
+                                HapticFeedback.lightImpact();
+                              },
+                              child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  margin: const EdgeInsets.only(left: 10),
+                                  decoration: BoxDecoration(
+                                      color: Theme.of(context).cardColor,
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: const Icon(
+                                    Icons.music_note_rounded,
+                                    size: 18,
+                                  )),
+                            ),
                         ],
                       ),
                     ),
@@ -148,7 +190,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                   color: isDark
                                       ? Colors.grey.shade400
                                       : Colors.grey.shade700),
-                              placeholder: "Search for name or message",
+                              placeholder: "Search for track",
                               decoration: BoxDecoration(
                                 color: Theme.of(context).cardColor,
                               ),
@@ -159,8 +201,13 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                       : Colors.grey.shade900),
                               keyboardType: TextInputType.text,
                               textInputAction: TextInputAction.search,
-                              onChanged: (value) async {
-                                setState(() {});
+                              onChanged: (value) {
+                                if (value.isNotEmpty) {
+                                  getSearchTrack(value);
+                                } else {
+                                  listSearch.clear();
+                                  setState(() {});
+                                }
                               },
                             ),
                           ),
@@ -168,6 +215,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                         ],
                       ),
                     ),
+                    if (listSearch.isNotEmpty) _searchSection(),
+                    _trackSection(),
                     _musicSection(),
                     const SizedBox(height: 16),
                   ],
@@ -178,12 +227,102 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
         ));
   }
 
+  Widget _searchSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const CustomText(
+          text: "Searched",
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          padding: EdgeInsets.only(left: 16),
+        ),
+        const SizedBox(height: 6),
+        ListView.builder(
+            shrinkWrap: true,
+            itemCount: listSearch.length,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            itemBuilder: (context, index) {
+              var track = listSearch[index];
+
+              return TrackPreview(
+                tracks: track,
+                player: player,
+                idPlayer: idPlayer,
+                isAlbum: true,
+                onTap: () {
+                  if (mounted) {
+                    setState(() {
+                      idPlayer = track.id;
+                    });
+                  }
+                },
+                onEnd: () {
+                  if (mounted) {
+                    setState(() {
+                      idPlayer = null;
+                    });
+                  }
+                },
+              );
+            }),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _trackSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const CustomText(
+          text: "Popular Track",
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          padding: EdgeInsets.only(left: 16),
+        ),
+        const SizedBox(height: 6),
+        ListView.builder(
+            shrinkWrap: true,
+            itemCount: listTrack.length,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            itemBuilder: (context, index) {
+              var track = listTrack[index];
+
+              return TrackPreview(
+                tracks: track,
+                player: player,
+                idPlayer: idPlayer,
+                isAlbum: true,
+                onTap: () {
+                  if (mounted) {
+                    setState(() {
+                      idPlayer = track.id;
+                    });
+                  }
+                },
+                onEnd: () {
+                  if (mounted) {
+                    setState(() {
+                      idPlayer = null;
+                    });
+                  }
+                },
+              );
+            }),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
   Widget _musicSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const CustomText(
-          text: "Music",
+          text: "Popular Artist",
           fontSize: 18,
           fontWeight: FontWeight.w700,
           padding: EdgeInsets.only(left: 16),
