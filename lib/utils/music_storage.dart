@@ -79,8 +79,9 @@ String formatMilliseconds(int milliseconds) {
   int minutes = (seconds / 60).truncate();
   seconds = seconds % 60;
 
-  String minutesStr = (minutes % 60).toString().padLeft(2, '0');
-  String secondsStr = seconds.toString().padLeft(2, '0');
+  String minutesStr =
+      (minutes % 60).toString().padLeft(2, '0').replaceAll("0", "");
+  String secondsStr = seconds.toString().padLeft(2, '0').replaceAll("0", "");
 
   return "$minutesStr minutes $secondsStr seconds";
 }

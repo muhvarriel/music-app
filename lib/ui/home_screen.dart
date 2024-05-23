@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:music_app/model/track.dart';
 import 'package:music_app/repository/music_repo.dart';
-import 'package:music_app/ui/chat_music_screen.dart';
+import 'package:music_app/ui/music_screen.dart';
 import 'package:music_app/ui/widgets/custom_cached_image.dart';
 import 'package:music_app/ui/widgets/custom_text.dart';
 import 'package:music_app/utils/app_navigators.dart';
@@ -14,16 +14,16 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-class ChatHomeScreen extends StatefulWidget {
+class HomeScreen extends StatefulWidget {
   final Function(String)? onWeb;
 
-  const ChatHomeScreen({super.key, this.onWeb});
+  const HomeScreen({super.key, this.onWeb});
 
   @override
-  State<ChatHomeScreen> createState() => _ChatHomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _ChatHomeScreenState extends State<ChatHomeScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchEditingController =
       TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -344,7 +344,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                     onTap: () async {
                       HapticFeedback.lightImpact();
 
-                      await pageOpenWithResult(ChatMusicScreen(artist: artist));
+                      await pageOpenWithResult(MusicScreen(artist: artist));
 
                       setState(() {});
                     },

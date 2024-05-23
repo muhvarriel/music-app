@@ -6,6 +6,8 @@ import 'package:music_app/model/artist.dart';
 import 'package:music_app/model/artist_album.dart';
 import 'package:music_app/model/track.dart';
 import 'package:music_app/repository/music_repo.dart';
+import 'package:music_app/repository/user_repo.dart';
+import 'package:music_app/ui/preview_screen.dart';
 import 'package:music_app/ui/widgets/custom_back_button.dart';
 import 'package:music_app/ui/widgets/custom_cached_image.dart';
 import 'package:music_app/ui/widgets/custom_text.dart';
@@ -17,15 +19,15 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:like_button/like_button.dart';
 
-class ChatMusicScreen extends StatefulWidget {
+class MusicScreen extends StatefulWidget {
   final Artist artist;
-  const ChatMusicScreen({super.key, required this.artist});
+  const MusicScreen({super.key, required this.artist});
 
   @override
-  State<ChatMusicScreen> createState() => _ChatMusicScreenState();
+  State<MusicScreen> createState() => _MusicScreenState();
 }
 
-class _ChatMusicScreenState extends State<ChatMusicScreen> {
+class _MusicScreenState extends State<MusicScreen> {
   bool isLoading = false;
   ArtistAlbumResponse? _artistAlbumResponse;
   List<Tracks> listTrack = [];
@@ -44,6 +46,7 @@ class _ChatMusicScreenState extends State<ChatMusicScreen> {
   String? idPlayer;
 
   List<Tracks> selectedAlbumTrack = [];
+  double? valuePreview = 1;
 
   @override
   void initState() {
@@ -137,9 +140,25 @@ class _ChatMusicScreenState extends State<ChatMusicScreen> {
     CacheArtist? cacheArtist = MusicStorage.cacheArtist
         .firstWhereOrNull((e) => e.id == widget.artist.id);
 
-    if (mounted) {
-      setState(() {
-        description = cacheArtist?.about;
+    if (cacheArtist != null) {
+      if (mounted) {
+        setState(() {
+          description = cacheArtist.about;
+        });
+      }
+    } else {
+      await UserRepo.generateContent(
+              text:
+                  "Tell me about artist ${widget.artist.name ?? ""}, for more information genre is ${widget.artist.genres?.join(", ") ?? ""} and album is ${_artistAlbumResponse?.items?.map((e) => e.name).toList().join(", ")} and music is ${listTrack.map((e) => e.name).toList().join(", ")} in one paragraph so user can easy to read it")
+          .then((value) async {
+        if (mounted) {
+          setState(() {
+            description = value;
+          });
+        }
+
+        await MusicStorage.addArtistAbout(
+            CacheArtist(id: widget.artist.id, about: value));
       });
     }
   }
@@ -249,6 +268,73 @@ class _ChatMusicScreenState extends State<ChatMusicScreen> {
                 ),
                 Column(
                   children: [
+                    const SizedBox(height: 16),
+                    if (listTrack.isNotEmpty &&
+                        !listTrack.any((e) => e.previewUrl == null))
+                      GestureDetector(
+                        onTap: () async {
+                          HapticFeedback.lightImpact();
+
+                          setState(() {
+                            valuePreview = null;
+                          });
+
+                          await Future.delayed(
+                              const Duration(milliseconds: 750));
+
+                          await pageOpenWithResult(
+                              PreviewScreen(listTrack: listTrack));
+
+                          setState(() {
+                            valuePreview = 1;
+                          });
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Stack(
+                                children: [
+                                  Hero(
+                                    tag: listTrack.firstOrNull?.album?.images
+                                            ?.firstOrNull?.url ??
+                                        "",
+                                    child: customCachedImage(
+                                      width: 36,
+                                      height: 36,
+                                      radius: 100,
+                                      isRectangle: true,
+                                      url: listTrack.firstOrNull?.album?.images
+                                              ?.firstOrNull?.url ??
+                                          "",
+                                      isDrive: false,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    child: CircularProgressIndicator(
+                                        value: valuePreview),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 16),
+                              const CustomText(
+                                text: "Top Track Preview",
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 16),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +537,7 @@ class _ChatMusicScreenState extends State<ChatMusicScreen> {
                                       }
 
                                       await pageOpenWithResult(
-                                          ChatMusicScreen(artist: artist));
+                                          MusicScreen(artist: artist));
 
                                       setState(() {});
                                     },
@@ -614,9 +700,25 @@ class _ChatMusicScreenState extends State<ChatMusicScreen> {
                   CacheArtist? cacheAlbum = MusicStorage.cacheAlbum
                       .firstWhereOrNull((e) => e.id == selectedAlbum?.id);
 
-                  if (mounted) {
-                    setState(() {
-                      aboutAlbum = cacheAlbum?.about;
+                  if (cacheAlbum != null) {
+                    if (mounted) {
+                      setState(() {
+                        aboutAlbum = cacheAlbum.about;
+                      });
+                    }
+                  } else {
+                    await UserRepo.generateContent(
+                            text:
+                                "Tell me about album ${selectedAlbum?.name ?? ""} by ${selectedAlbum?.artists?.map((e) => e.name).toList().join(", ") ?? ""}, for more information genre is ${widget.artist.genres?.join(", ") ?? ""} and music is ${selectedAlbumTrack.map((e) => "${e.name ?? ""} by ${e.artists?.map((r) => r.name).toList().join(", ") ?? ""}").toList().join(", ")} release on ${formatDate("d MMMM y", date: selectedAlbum?.releaseDate)} in one paragraph so user can easy to read it")
+                        .then((valueAbout) async {
+                      if (mounted) {
+                        setState(() {
+                          aboutAlbum = valueAbout;
+                        });
+                      }
+
+                      await MusicStorage.addAlbumAbout(CacheArtist(
+                          id: selectedAlbum?.id, about: valueAbout));
                     });
                   }
                 });

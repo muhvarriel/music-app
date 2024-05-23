@@ -1,4 +1,4 @@
-import 'package:music_app/ui/chat_home_screen.dart';
+import 'package:music_app/ui/home_screen.dart';
 import 'package:music_app/ui/widgets/button_widget.dart';
 import 'package:music_app/ui/widgets/custom_text.dart';
 import 'package:music_app/utils/app_navigators.dart';
@@ -168,7 +168,7 @@ class _DifferentOfWebScreenState extends State<DifferentOfWebScreen> {
                     borderRadius: BorderRadius.circular(30),
                     child: SizedBox(
                       width: screenWidth / ((screenWidth > 1028) ? 3 : 2.5),
-                      child: ChatHomeScreen(
+                      child: HomeScreen(
                         onWeb: (value) {
                           setState(() {
                             id = value;
@@ -207,7 +207,7 @@ class _MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<Widget> _fragmentList = [
-    const ChatHomeScreen(),
+    const HomeScreen(),
     Container(
       color: Colors.white,
       child: const Center(
