@@ -33,7 +33,7 @@ class MusicRepo {
         response.data['access_token'].toString(),
       );
     } on DioException catch (e) {
-      print('error generateToken $e');
+      log('error generateToken $e');
     }
   }
 

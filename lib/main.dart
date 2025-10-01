@@ -1,16 +1,24 @@
-import 'package:music_app/ui/home_screen.dart';
-import 'package:music_app/ui/widgets/button_widget.dart';
-import 'package:music_app/ui/widgets/custom_text.dart';
-import 'package:music_app/utils/app_navigators.dart';
-import 'package:music_app/utils/constants.dart';
-import 'package:music_app/utils/music_storage.dart';
-import 'package:music_app/utils/shared_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:music_app/ui/home_screen.dart';
+import 'package:music_app/ui/widgets/button_widget.dart';
+import 'package:music_app/ui/widgets/custom_text.dart';
+import 'package:music_app/ui/widgets/global_player.dart';
+import 'package:music_app/utils/app_navigators.dart';
+import 'package:music_app/utils/constants.dart';
+import 'package:music_app/utils/music_provider.dart';
+import 'package:music_app/utils/music_storage.dart';
+import 'package:music_app/utils/shared_helpers.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => MusicProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -19,11 +27,26 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'ChatAI Messenger',
+      title: 'Music App',
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,
       home: const SplashScreen(),
+      builder: (context, child) {
+        return Scaffold(
+          body: Stack(
+            children: [
+              child!,
+              const Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: GlobalPlayer(),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -87,15 +110,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Widget _buildSplash() {
     return isLoading
-        ? Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFFF0F9FD),
-              image: DecorationImage(
-                image: AssetImage("assets/icons/logo.png"),
-                fit: BoxFit.fitWidth,
-              ),
-            ),
-          )
+        ? Container(decoration: const BoxDecoration(color: Color(0xFFF0F9FD)))
         : Container(
             color: Theme.of(context).scaffoldBackgroundColor,
             padding: EdgeInsets.fromLTRB(
@@ -122,15 +137,14 @@ class _SplashScreenState extends State<SplashScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomText(
-          text: "Chat with Your Personal AI Assistant",
+          text: "Music App",
           fontSize: 33,
           fontWeight: FontWeight.w800,
           color: isDark ? Colors.white : Colors.grey.shade900,
         ),
         const SizedBox(height: 12),
         CustomText(
-          text:
-              "Your personal AI assistant, designed to help you streamline tasks and enhance productivity.",
+          text: "Listen to your favorite music, anytime, anywhere.",
           fontWeight: FontWeight.normal,
           color: isDark ? Colors.white : Colors.grey.shade900,
         ),
@@ -236,37 +250,6 @@ class _MainPageState extends State<MainPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /*
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(10),
-            topRight: Radius.circular(10),
-          ),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 0,
-              blurRadius: 7,
-              offset: const Offset(0, -7),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          items: _itemBottomMenu(),
-          currentIndex: _tabController.index,
-          onTap: _onMenuBottomTapped,
-          selectedItemColor: Colors.black,
-          unselectedItemColor: Colors.grey,
-          selectedFontSize: 0,
-          unselectedFontSize: 0,
-          type: BottomNavigationBarType.fixed,
-        ),
-      ),
-      */
       body: DefaultTabController(
         length: _fragmentList.length,
         child: TabBarView(
@@ -276,29 +259,5 @@ class _MainPageState extends State<MainPage>
         ),
       ),
     );
-  }
-
-  List<BottomNavigationBarItem> _itemBottomMenu() {
-    return [
-      BottomNavigationBarItem(
-        icon: const Icon(Icons.home_outlined),
-        activeIcon: const Icon(Icons.home_rounded),
-        label: "".tr,
-      ),
-      BottomNavigationBarItem(
-        icon: const Icon(Icons.person_outline_rounded),
-        activeIcon: const Icon(Icons.person_rounded),
-        label: "".tr,
-      ),
-    ];
-  }
-
-  void _onMenuBottomTapped(int index) {
-    HapticFeedback.lightImpact();
-    if (_tabController.index != index) {
-      setState(() {
-        _tabController.index = index;
-      });
-    }
   }
 }

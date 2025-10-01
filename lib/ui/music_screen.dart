@@ -1,7 +1,11 @@
 import 'dart:developer';
 import 'dart:ui';
 
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:like_button/like_button.dart';
 import 'package:music_app/model/artist.dart';
 import 'package:music_app/model/artist_album.dart';
 import 'package:music_app/model/track.dart';
@@ -11,13 +15,11 @@ import 'package:music_app/ui/preview_screen.dart';
 import 'package:music_app/ui/widgets/custom_back_button.dart';
 import 'package:music_app/ui/widgets/custom_cached_image.dart';
 import 'package:music_app/ui/widgets/custom_text.dart';
+import 'package:music_app/ui/widgets/track_preview.dart';
 import 'package:music_app/utils/app_navigators.dart';
+import 'package:music_app/utils/music_provider.dart';
 import 'package:music_app/utils/music_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:like_button/like_button.dart';
+import 'package:provider/provider.dart';
 
 class MusicScreen extends StatefulWidget {
   final Artist artist;
@@ -42,9 +44,6 @@ class _MusicScreenState extends State<MusicScreen> {
 
   String? description;
 
-  final player = AudioPlayer();
-  String? idPlayer;
-
   List<Tracks> selectedAlbumTrack = [];
   double? valuePreview = 1;
 
@@ -58,7 +57,6 @@ class _MusicScreenState extends State<MusicScreen> {
   @override
   void dispose() {
     super.dispose();
-    player.dispose();
     _scrollController.removeListener(snapScroll);
     _scrollController.dispose();
     _draggableScrollableController.dispose();
@@ -174,6 +172,7 @@ class _MusicScreenState extends State<MusicScreen> {
   @override
   Widget build(BuildContext context) {
     List<Tracks> previewTrack = listTrack;
+    final musicProvider = Provider.of<MusicProvider>(context, listen: false);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -181,7 +180,7 @@ class _MusicScreenState extends State<MusicScreen> {
         centerTitle: true,
         backgroundColor: Theme.of(
           context,
-        ).scaffoldBackgroundColor.withOpacity(opacityBorder),
+        ).scaffoldBackgroundColor.withValues(alpha: opacityBorder),
         title: Opacity(
           opacity: opacityBorder,
           child: CustomText(
@@ -294,6 +293,8 @@ class _MusicScreenState extends State<MusicScreen> {
                           setState(() {
                             valuePreview = null;
                           });
+
+                          await musicProvider.stop();
 
                           await Future.delayed(
                             const Duration(milliseconds: 750),
@@ -422,7 +423,7 @@ class _MusicScreenState extends State<MusicScreen> {
                                             height: 60,
                                             padding: const EdgeInsets.all(10),
                                             color: Colors.grey.shade800
-                                                .withOpacity(0.5),
+                                                .withValues(alpha: 0.5),
                                             child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
@@ -482,22 +483,9 @@ class _MusicScreenState extends State<MusicScreen> {
 
                             return TrackPreview(
                               tracks: track,
-                              player: player,
-                              idPlayer: idPlayer,
                               isAlbum: true,
                               onTap: () {
-                                if (mounted) {
-                                  setState(() {
-                                    idPlayer = track.id;
-                                  });
-                                }
-                              },
-                              onEnd: () {
-                                if (mounted) {
-                                  setState(() {
-                                    idPlayer = null;
-                                  });
-                                }
+                                musicProvider.play(track);
                               },
                             );
                           },
@@ -636,7 +624,7 @@ class _MusicScreenState extends State<MusicScreen> {
                                                               color: Colors
                                                                   .grey
                                                                   .shade800
-                                                                  .withOpacity(
+                                                                  .withValues(alpha: 
                                                                     0.5,
                                                                   ),
                                                               child: const Icon(
@@ -675,7 +663,7 @@ class _MusicScreenState extends State<MusicScreen> {
                                                   10,
                                                 ),
                                                 color: Colors.grey.shade800
-                                                    .withOpacity(0.5),
+                                                    .withValues(alpha: 0.5),
                                                 alignment: Alignment.center,
                                                 child: CustomText(
                                                   text: artist.name ?? "",
@@ -723,7 +711,8 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Future<void> showAlbum(Albums? selectedAlbum) async {
-    player.stop();
+    final musicProvider = Provider.of<MusicProvider>(context, listen: false);
+    musicProvider.stop();
     ScrollController controller = ScrollController();
     bool isOpen = true;
     bool initial = true;
@@ -856,21 +845,8 @@ class _MusicScreenState extends State<MusicScreen> {
 
                         return TrackPreview(
                           tracks: track,
-                          player: player,
-                          idPlayer: idPlayer,
                           onTap: () {
-                            if (mounted) {
-                              setState(() {
-                                idPlayer = track.id;
-                              });
-                            }
-                          },
-                          onEnd: () {
-                            if (mounted) {
-                              setState(() {
-                                idPlayer = null;
-                              });
-                            }
+                            musicProvider.play(track);
                           },
                         );
                       },
@@ -921,166 +897,9 @@ class _MusicScreenState extends State<MusicScreen> {
       },
     ).whenComplete(
       () => setState(() {
-        idPlayer = null;
         selectedAlbumTrack.clear();
-        player.stop();
+        musicProvider.stop();
       }),
-    );
-  }
-}
-
-class TrackPreview extends StatefulWidget {
-  final Tracks tracks;
-  final AudioPlayer player;
-  final String? idPlayer;
-  final Function() onTap;
-  final Function() onEnd;
-  final EdgeInsets? padding;
-  final bool? isAlbum;
-
-  const TrackPreview({
-    super.key,
-    required this.tracks,
-    required this.player,
-    this.idPlayer,
-    required this.onTap,
-    required this.onEnd,
-    this.padding,
-    this.isAlbum,
-  });
-
-  @override
-  State<TrackPreview> createState() => _TrackPreviewState();
-}
-
-class _TrackPreviewState extends State<TrackPreview> {
-  Duration? _duration;
-  Duration? _position;
-
-  @override
-  Widget build(BuildContext context) {
-    widget.player.onPlayerStateChanged.listen((event) {
-      if (event == PlayerState.completed) {
-        widget.onEnd();
-      }
-    });
-
-    widget.player.onPositionChanged.listen((event) {
-      if (mounted) {
-        if (event != _duration) {
-          setState(() => _position = event);
-        }
-      }
-    });
-
-    return InkWell(
-      onTap: () async {
-        HapticFeedback.lightImpact();
-        final previewUrl = await MusicRepo.getSpotifyPreviewUrl(
-          widget.tracks.id ?? "",
-        );
-
-        if (previewUrl?.isNotEmpty ?? false) {
-          if (widget.idPlayer == widget.tracks.id) {
-            if (widget.player.state == PlayerState.playing) {
-              await widget.player.pause();
-            } else {
-              await widget.player.resume();
-            }
-          } else {
-            widget.onTap();
-
-            await widget.player.play(
-              UrlSource(previewUrl ?? 'https://foo.com/bar.mp3'),
-            );
-            widget.player.getDuration().then((value) => _duration = value);
-          }
-        }
-      },
-      child: Padding(
-        padding:
-            widget.padding ??
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Stack(
-              children: [
-                (widget.tracks.album?.images?.isNotEmpty ?? false)
-                    ? customCachedImage(
-                        width: 50,
-                        height: 50,
-                        radius: 10,
-                        isRectangle: true,
-                        url:
-                            widget.tracks.album?.images?.firstOrNull?.url ?? "",
-                        isDrive: false,
-                        isBlack: widget.idPlayer == widget.tracks.id,
-                      )
-                    : Container(
-                        width: 30,
-                        height: 30,
-                        alignment: Alignment.center,
-                        child: CustomText(
-                          text: (widget.tracks.trackNumber ?? 0).toString(),
-                        ),
-                      ),
-                if (widget.idPlayer == widget.tracks.id)
-                  Center(
-                    child: Container(
-                      width: (widget.tracks.album?.images?.isNotEmpty ?? false)
-                          ? 50
-                          : 30,
-                      height: (widget.tracks.album?.images?.isNotEmpty ?? false)
-                          ? 50
-                          : 30,
-                      padding:
-                          (widget.tracks.album?.images?.isNotEmpty ?? false)
-                          ? const EdgeInsets.all(14)
-                          : EdgeInsets.zero,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        value:
-                            widget.player.state == PlayerState.playing ||
-                                widget.player.state == PlayerState.paused
-                            ? ((_position?.inMilliseconds ?? 1) /
-                                      (_duration?.inMilliseconds ?? 1))
-                                  .clamp(0, 1)
-                            : null,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CustomText(
-                    text: widget.tracks.name ?? "",
-                    overflow: TextOverflow.clip,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  CustomText(
-                    text: (widget.isAlbum ?? false)
-                        ? (widget.tracks.album?.name ?? "-")
-                        : (widget.tracks.artists
-                                  ?.map((e) => e.name ?? "")
-                                  .toList()
-                                  .join(", ") ??
-                              "-"),
-                    overflow: TextOverflow.ellipsis,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

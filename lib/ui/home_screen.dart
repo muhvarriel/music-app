@@ -1,18 +1,22 @@
+import 'dart:async';
 import 'dart:ui';
 
-import 'package:audioplayers/audioplayers.dart';
-import 'package:music_app/model/track.dart';
-import 'package:music_app/repository/music_repo.dart';
-import 'package:music_app/ui/music_screen.dart';
-import 'package:music_app/ui/widgets/custom_cached_image.dart';
-import 'package:music_app/ui/widgets/custom_text.dart';
-import 'package:music_app/utils/app_navigators.dart';
-import 'package:music_app/utils/music_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:music_app/model/artist.dart';
+import 'package:music_app/model/track.dart';
+import 'package:music_app/repository/music_repo.dart';
+import 'package:music_app/ui/music_screen.dart';
+import 'package:music_app/ui/widgets/custom_cached_image.dart';
+import 'package:music_app/ui/widgets/custom_text.dart';
+import 'package:music_app/ui/widgets/track_preview.dart';
+import 'package:music_app/utils/app_navigators.dart';
+import 'package:music_app/utils/music_provider.dart';
+import 'package:music_app/utils/music_storage.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(String)? onWeb;
@@ -30,14 +34,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Tracks> listTrack = [];
   List<Tracks> listSearch = [];
-
-  final player = AudioPlayer();
-  String? idPlayer;
+  List<Artist> listSearchArtist = [];
+  Timer? _debounce;
 
   @override
   void initState() {
     init();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
   }
 
   void init() async {
@@ -56,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> getSearchTrack(String query) async {
-    await MusicRepo.searchTrack(query).then((value) {
+    await MusicRepo.searchTrack(query).then((value) async {
       if (value[0] == 200) {
         if (mounted) {
           TracksResponse result = value[1];
@@ -64,20 +73,44 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             listSearch = result.items ?? [];
           });
+
+          await MusicRepo.getArtist(
+            listSearch
+                .map((e) => e.artists?.firstOrNull?.id ?? "")
+                .toSet()
+                .where((e) => e.isNotEmpty)
+                .toList(),
+          ).then((value) {
+            if (value[0] == 200) {
+              if (mounted) {
+                List<Artist> resultArtist = value[1];
+
+                setState(() {
+                  listSearchArtist = resultArtist;
+                });
+              }
+            }
+          });
         }
       }
     });
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    player.dispose();
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (query.isNotEmpty) {
+        getSearchTrack(query);
+      } else {
+        listSearch.clear();
+        listSearchArtist.clear();
+        setState(() {});
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.sizeOf(context).width;
     bool isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
     double opacityBorder = _scrollController.hasClients
@@ -114,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
               border: Border(
                 bottom: BorderSide(
                   color: (isDark ? Colors.grey.shade900 : Colors.grey.shade100)
-                      .withOpacity(opacityBorder),
+                      .withValues(alpha: opacityBorder),
                 ),
               ),
             ),
@@ -139,24 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      if (false)
-                        GestureDetector(
-                          onTap: () async {
-                            HapticFeedback.lightImpact();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            margin: const EdgeInsets.only(left: 10),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.music_note_rounded,
-                              size: 18,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -210,14 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             keyboardType: TextInputType.text,
                             textInputAction: TextInputAction.search,
-                            onChanged: (value) {
-                              if (value.isNotEmpty) {
-                                getSearchTrack(value);
-                              } else {
-                                listSearch.clear();
-                                setState(() {});
-                              }
-                            },
+                            onChanged: _onSearchChanged,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -225,8 +233,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   if (listSearch.isNotEmpty) _searchSection(),
+                  if (listSearchArtist.isNotEmpty)
+                    _musicSection("Searched Artist", listSearchArtist),
                   _trackSection(),
-                  _musicSection(),
+                  _musicSection("Popular Artist", MusicStorage.listMusic),
                   const SizedBox(height: 16),
                 ],
               ),
@@ -238,6 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _searchSection() {
+    final musicProvider = Provider.of<MusicProvider>(context, listen: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -258,22 +269,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
             return TrackPreview(
               tracks: track,
-              player: player,
-              idPlayer: idPlayer,
               isAlbum: true,
               onTap: () {
-                if (mounted) {
-                  setState(() {
-                    idPlayer = track.id;
-                  });
-                }
-              },
-              onEnd: () {
-                if (mounted) {
-                  setState(() {
-                    idPlayer = null;
-                  });
-                }
+                musicProvider.play(track);
               },
             );
           },
@@ -284,6 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _trackSection() {
+    final musicProvider = Provider.of<MusicProvider>(context, listen: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -304,22 +303,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
             return TrackPreview(
               tracks: track,
-              player: player,
-              idPlayer: idPlayer,
               isAlbum: true,
               onTap: () {
-                if (mounted) {
-                  setState(() {
-                    idPlayer = track.id;
-                  });
-                }
-              },
-              onEnd: () {
-                if (mounted) {
-                  setState(() {
-                    idPlayer = null;
-                  });
-                }
+                musicProvider.play(track);
               },
             );
           },
@@ -329,12 +315,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _musicSection() {
+  Widget _musicSection(String title, List<Artist> listArtists) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CustomText(
-          text: "Popular Artist",
+        CustomText(
+          text: title,
           fontSize: 18,
           fontWeight: FontWeight.w700,
           padding: EdgeInsets.only(left: 16),
@@ -343,11 +329,11 @@ class _HomeScreenState extends State<HomeScreen> {
         SizedBox(
           height: 200,
           child: ListView.builder(
-            itemCount: MusicStorage.listMusic.length,
+            itemCount: listArtists.length,
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemBuilder: (context, index) {
-              var artist = MusicStorage.listMusic[index];
+              var artist = listArtists[index];
 
               return Padding(
                 padding: EdgeInsets.only(left: index == 0 ? 16 : 0, right: 16),
@@ -405,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       3,
                                                     ),
                                                 color: Colors.grey.shade800
-                                                    .withOpacity(0.5),
+                                                    .withValues(alpha: 0.5),
                                                 child: const Icon(
                                                   Icons.favorite_rounded,
                                                   color: Colors.red,
@@ -432,7 +418,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   width: 175,
                                   height: 60,
                                   padding: const EdgeInsets.all(10),
-                                  color: Colors.grey.shade800.withOpacity(0.5),
+                                  color: Colors.grey.shade800.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,

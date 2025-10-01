@@ -68,7 +68,7 @@ class FadingPageViewController {
   /// Set the current page and call the handlers, if needed
   set currentPage(int value) {
     if ((value < 0) || (value >= _pageCount)) {
-      throw IndexError(value, this);
+      throw IndexError.withLength(value, _pageCount);
     }
     _currentPage = value;
     _callHandlers(_onSetPage);
