@@ -9,14 +9,15 @@ class TracksResponse {
   String? previous;
   int? total;
 
-  TracksResponse(
-      {this.href,
-      this.items,
-      this.limit,
-      this.next,
-      this.offset,
-      this.previous,
-      this.total});
+  TracksResponse({
+    this.href,
+    this.items,
+    this.limit,
+    this.next,
+    this.offset,
+    this.previous,
+    this.total,
+  });
 
   TracksResponse.fromJson(Map<String, dynamic> json) {
     href = json['href'];
@@ -61,28 +62,27 @@ class Tracks {
   bool? isLocal;
   String? name;
   int? popularity;
-  String? previewUrl;
   int? trackNumber;
   String? type;
   String? uri;
 
-  Tracks(
-      {this.album,
-      this.artists,
-      this.discNumber,
-      this.durationMs,
-      this.explicit,
-      this.externalIds,
-      this.externalUrls,
-      this.href,
-      this.id,
-      this.isLocal,
-      this.name,
-      this.popularity,
-      this.previewUrl,
-      this.trackNumber,
-      this.type,
-      this.uri});
+  Tracks({
+    this.album,
+    this.artists,
+    this.discNumber,
+    this.durationMs,
+    this.explicit,
+    this.externalIds,
+    this.externalUrls,
+    this.href,
+    this.id,
+    this.isLocal,
+    this.name,
+    this.popularity,
+    this.trackNumber,
+    this.type,
+    this.uri,
+  });
 
   Tracks.fromJson(Map<String, dynamic> json) {
     album = json['album'] != null ? Album.fromJson(json['album']) : null;
@@ -106,7 +106,6 @@ class Tracks {
     isLocal = json['is_local'];
     name = json['name'];
     popularity = json['popularity'];
-    previewUrl = json['preview_url'];
     trackNumber = json['track_number'];
     type = json['type'];
     uri = json['uri'];
@@ -134,11 +133,46 @@ class Tracks {
     data['is_local'] = isLocal;
     data['name'] = name;
     data['popularity'] = popularity;
-    data['preview_url'] = previewUrl;
     data['track_number'] = trackNumber;
     data['type'] = type;
     data['uri'] = uri;
     return data;
+  }
+
+  Tracks copyWith({
+    Album? album,
+    List<Artists>? artists,
+    int? discNumber,
+    int? durationMs,
+    bool? explicit,
+    ExternalIds? externalIds,
+    ExternalUrls? externalUrls,
+    String? href,
+    String? id,
+    bool? isLocal,
+    String? name,
+    int? popularity,
+    int? trackNumber,
+    String? type,
+    String? uri,
+  }) {
+    return Tracks(
+      album: album ?? this.album,
+      artists: artists ?? this.artists,
+      discNumber: discNumber ?? this.discNumber,
+      durationMs: durationMs ?? this.durationMs,
+      explicit: explicit ?? this.explicit,
+      externalIds: externalIds ?? this.externalIds,
+      externalUrls: externalUrls ?? this.externalUrls,
+      href: href ?? this.href,
+      id: id ?? this.id,
+      isLocal: isLocal ?? this.isLocal,
+      name: name ?? this.name,
+      popularity: popularity ?? this.popularity,
+      trackNumber: trackNumber ?? this.trackNumber,
+      type: type ?? this.type,
+      uri: uri ?? this.uri,
+    );
   }
 }
 
@@ -156,19 +190,20 @@ class Album {
   String? type;
   String? uri;
 
-  Album(
-      {this.albumType,
-      this.artists,
-      this.externalUrls,
-      this.href,
-      this.id,
-      this.images,
-      this.name,
-      this.releaseDate,
-      this.releaseDatePrecision,
-      this.totalTracks,
-      this.type,
-      this.uri});
+  Album({
+    this.albumType,
+    this.artists,
+    this.externalUrls,
+    this.href,
+    this.id,
+    this.images,
+    this.name,
+    this.releaseDate,
+    this.releaseDatePrecision,
+    this.totalTracks,
+    this.type,
+    this.uri,
+  });
 
   Album.fromJson(Map<String, dynamic> json) {
     albumType = json['album_type'];
@@ -229,8 +264,14 @@ class Artists {
   String? type;
   String? uri;
 
-  Artists(
-      {this.externalUrls, this.href, this.id, this.name, this.type, this.uri});
+  Artists({
+    this.externalUrls,
+    this.href,
+    this.id,
+    this.name,
+    this.type,
+    this.uri,
+  });
 
   Artists.fromJson(Map<String, dynamic> json) {
     externalUrls = json['external_urls'] != null

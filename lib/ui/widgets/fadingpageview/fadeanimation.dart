@@ -8,13 +8,14 @@ class FadeAnimation extends StatefulWidget {
   final VoidCallback? onShown;
   final VoidCallback? onHidden;
 
-  const FadeAnimation(
-      {required this.child,
-      this.duration = const Duration(milliseconds: 200),
-      this.fadeIn = true,
-      this.onShown,
-      this.onHidden,
-      super.key});
+  const FadeAnimation({
+    required this.child,
+    this.duration = const Duration(milliseconds: 200),
+    this.fadeIn = true,
+    this.onShown,
+    this.onHidden,
+    super.key,
+  });
 
   @override
   State<FadeAnimation> createState() => _FadeAnimationState();
@@ -27,21 +28,20 @@ class _FadeAnimationState extends State<FadeAnimation>
     vsync: this,
   );
 
-  late final Animation<double> _animation = CurvedAnimation(
-    parent: _controller,
-    curve: Curves.easeIn,
-  )..addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        if (widget.onShown != null) {
-          widget.onShown!.call();
-        }
-      }
-      if (status == AnimationStatus.dismissed) {
-        if (widget.onHidden != null) {
-          widget.onHidden!.call();
-        }
-      }
-    });
+  late final Animation<double> _animation =
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn)
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            if (widget.onShown != null) {
+              widget.onShown!.call();
+            }
+          }
+          if (status == AnimationStatus.dismissed) {
+            if (widget.onHidden != null) {
+              widget.onHidden!.call();
+            }
+          }
+        });
 
   @override
   void dispose() {
@@ -57,9 +57,6 @@ class _FadeAnimationState extends State<FadeAnimation>
     } else {
       _controller.reverse(from: _controller.upperBound);
     }
-    return FadeTransition(
-      opacity: _animation,
-      child: widget.child,
-    );
+    return FadeTransition(opacity: _animation, child: widget.child);
   }
 }

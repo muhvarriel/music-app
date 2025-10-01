@@ -1,83 +1,122 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:dio/dio.dart';
+import 'package:music_app/configuration/app_environment.dart';
 import 'package:music_app/model/chat_room.dart';
-import 'package:music_app/utils/constants.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 
 class UserRepo {
-  static Future<GenerativeModel?> generateModel(
-      {GenerationConfig? generationConfig}) async {
-    try {
-      final model = GenerativeModel(
-          model: 'gemini-pro',
-          apiKey: apiKey,
-          generationConfig: generationConfig);
+  static const String _baseUrl = 'https://api.groq.com/openai/v1';
+  static const String _model = 'deepseek-r1-distill-llama-70b';
 
-      return model;
-    } catch (e) {
-      return null;
-    }
+  static Dio _getDio() {
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: _baseUrl,
+        headers: {
+          'Authorization': 'Bearer ${AppEnvironment.apiKey}',
+          'Content-Type': 'application/json',
+        },
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 60),
+      ),
+    );
+
+    return dio;
+  }
+
+  // Helper function to remove <think> tags
+  static String _cleanThinkTags(String content) {
+    // Remove <think>...</think> content using regex
+    final regex = RegExp(r'<think>[\s\S]*?<\/think>\s*', multiLine: true);
+    return content.replaceAll(regex, '').trim();
   }
 
   static Future<String?> generateContent({String? text}) async {
     try {
-      final model = await generateModel();
+      final dio = _getDio();
 
-      if (model == null) {
-        return null;
+      final response = await dio.post(
+        '/chat/completions',
+        data: {
+          'model': _model,
+          'messages': [
+            {'role': 'user', 'content': text ?? ''},
+          ],
+          'temperature': 0.7,
+          'max_completion_tokens': 4096,
+        },
+      );
+
+      log("response: ${jsonEncode(response.data)}");
+
+      final content = response.data['choices']?[0]?['message']?['content'];
+
+      if (content != null) {
+        // Clean the <think> tags before returning
+        return _cleanThinkTags(content.toString());
       }
 
-      final content = [Content.text(text ?? "")];
-      final response = await model.generateContent(content);
-
-      return response.text;
+      return null;
+    } on DioException catch (e) {
+      log('DioException: ${e.message}');
+      log('Response: ${e.response?.data}');
+      return null;
     } catch (e) {
+      log('error $e');
       return null;
     }
   }
 
-  static Future<String?> sendText(
-      {String? text, List<Messages>? history}) async {
+  static Future<String?> sendText({
+    String? text,
+    List<Messages>? history,
+  }) async {
     try {
-      final model = await generateModel();
+      final dio = _getDio();
 
-      if (model == null) {
-        return null;
+      List<Map<String, dynamic>> messages = [];
+
+      if (history != null && history.isNotEmpty) {
+        messages = history.map((e) {
+          return {
+            'role': e.sender?.id == 0 ? 'user' : 'assistant',
+            'content': e.content ?? '',
+          };
+        }).toList();
       }
 
-      List<Content>? listContent = history
-          ?.map((e) => e.sender?.id == 0
-              ? Content.text(e.content ?? "")
-              : Content.model([TextPart(e.content ?? "")]))
-          .toList();
+      messages.add({'role': 'user', 'content': text ?? ''});
 
-      log("listContent: ${jsonEncode(listContent)}");
+      log("messages: ${jsonEncode(messages)}");
 
-      final chat = model.startChat(history: listContent);
-      var content = Content.text(text ?? "");
-      var response = await chat.sendMessage(content);
+      final response = await dio.post(
+        '/chat/completions',
+        data: {
+          'model': _model,
+          'messages': messages,
+          'temperature': 0.7,
+          'max_completion_tokens': 4096,
+        },
+      );
 
-      return response.text;
-    } on GenerativeAIException catch (e) {
-      print('error $e');
-      return e.message;
-    }
-  }
+      log("response: ${jsonEncode(response.data)}");
 
-  static List<String> extractDataIds(String response) {
-    List<String> dataIds = [];
+      final content = response.data['choices']?[0]?['message']?['content'];
 
-    RegExp regex = RegExp(r'data-id="([^"]*)"');
-
-    Iterable<Match> matches = regex.allMatches(response);
-
-    for (Match match in matches) {
-      if (match.groupCount >= 1) {
-        dataIds.add(match.group(1)!);
+      if (content != null) {
+        // Clean the <think> tags before returning
+        return _cleanThinkTags(content.toString());
       }
-    }
 
-    return dataIds;
+      return null;
+    } on DioException catch (e) {
+      log('DioException: ${e.message}');
+      log('Response: ${e.response?.data}');
+      return e.response?.data?['error']?['message'] ?? e.message;
+    } catch (e) {
+      log('error $e');
+      return null;
+    }
   }
 }

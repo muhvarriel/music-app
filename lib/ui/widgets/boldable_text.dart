@@ -10,8 +10,13 @@ class BoldableText extends StatelessWidget {
   final TextAlign? textAlign;
   final bool isSelectable;
 
-  const BoldableText(this.text,
-      {super.key, this.isSelectable = false, this.style, this.textAlign});
+  const BoldableText(
+    this.text, {
+    super.key,
+    this.isSelectable = false,
+    this.style,
+    this.textAlign,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +26,14 @@ class BoldableText extends StatelessWidget {
       if (i % 2 == 0) {
         children.add(TextSpan(text: split[i], style: style));
       } else {
-        children.add(TextSpan(
+        children.add(
+          TextSpan(
             text: split[i],
-            style: (style ?? const TextStyle())
-                .copyWith(fontWeight: FontWeight.bold)));
+            style: (style ?? const TextStyle()).copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
       }
     }
     if (isSelectable) {

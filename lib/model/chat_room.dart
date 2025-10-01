@@ -10,15 +10,16 @@ class ChatRoom {
   List<Members>? members;
   List<Messages>? messages;
 
-  ChatRoom(
-      {this.id,
-      this.name,
-      this.description,
-      this.image,
-      this.created,
-      this.pinned,
-      this.members,
-      this.messages});
+  ChatRoom({
+    this.id,
+    this.name,
+    this.description,
+    this.image,
+    this.created,
+    this.pinned,
+    this.members,
+    this.messages,
+  });
 
   ChatRoom.fromJson(Map<String, dynamic> json) {
     id = json['id'];

@@ -10,17 +10,18 @@ class Artist {
   String? type;
   String? uri;
 
-  Artist(
-      {this.externalUrls,
-      this.followers,
-      this.genres,
-      this.href,
-      this.id,
-      this.images,
-      this.name,
-      this.popularity,
-      this.type,
-      this.uri});
+  Artist({
+    this.externalUrls,
+    this.followers,
+    this.genres,
+    this.href,
+    this.id,
+    this.images,
+    this.name,
+    this.popularity,
+    this.type,
+    this.uri,
+  });
 
   Artist.fromJson(Map<String, dynamic> json) {
     externalUrls = json['external_urls'] != null

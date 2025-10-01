@@ -9,14 +9,15 @@ class ArtistAlbumResponse {
   String? previous;
   int? total;
 
-  ArtistAlbumResponse(
-      {this.href,
-      this.items,
-      this.limit,
-      this.next,
-      this.offset,
-      this.previous,
-      this.total});
+  ArtistAlbumResponse({
+    this.href,
+    this.items,
+    this.limit,
+    this.next,
+    this.offset,
+    this.previous,
+    this.total,
+  });
 
   ArtistAlbumResponse.fromJson(Map<String, dynamic> json) {
     href = json['href'];
@@ -63,20 +64,21 @@ class Albums {
   String? type;
   String? uri;
 
-  Albums(
-      {this.albumGroup,
-      this.albumType,
-      this.artists,
-      this.externalUrls,
-      this.href,
-      this.id,
-      this.images,
-      this.name,
-      this.releaseDate,
-      this.releaseDatePrecision,
-      this.totalTracks,
-      this.type,
-      this.uri});
+  Albums({
+    this.albumGroup,
+    this.albumType,
+    this.artists,
+    this.externalUrls,
+    this.href,
+    this.id,
+    this.images,
+    this.name,
+    this.releaseDate,
+    this.releaseDatePrecision,
+    this.totalTracks,
+    this.type,
+    this.uri,
+  });
 
   Albums.fromJson(Map<String, dynamic> json) {
     albumGroup = json['album_group'];
@@ -139,8 +141,14 @@ class Artists {
   String? type;
   String? uri;
 
-  Artists(
-      {this.externalUrls, this.href, this.id, this.name, this.type, this.uri});
+  Artists({
+    this.externalUrls,
+    this.href,
+    this.id,
+    this.name,
+    this.type,
+    this.uri,
+  });
 
   Artists.fromJson(Map<String, dynamic> json) {
     externalUrls = json['external_urls'] != null

@@ -21,15 +21,17 @@ Widget customCachedImage({
           width: width ?? 35,
           height: height ?? 35,
           decoration: BoxDecoration(
-            shape:
-                (isRectangle ?? false) ? BoxShape.rectangle : BoxShape.circle,
+            shape: (isRectangle ?? false)
+                ? BoxShape.rectangle
+                : BoxShape.circle,
             borderRadius: (isRectangle ?? false)
                 ? BorderRadius.circular(radius ?? 0)
                 : null,
             border: (withBorder ?? false)
                 ? Border.all(
                     color: Theme.of(Get.context!).colorScheme.primary,
-                    width: 3.5)
+                    width: 3.5,
+                  )
                 : null,
             image: DecorationImage(
               image: NetworkImage(url, scale: 0.5),
@@ -43,14 +45,17 @@ Widget customCachedImage({
           imageUrl: url,
           imageBuilder: (context, imageProvider) => Container(
             decoration: BoxDecoration(
-              shape:
-                  (isRectangle ?? false) ? BoxShape.rectangle : BoxShape.circle,
+              shape: (isRectangle ?? false)
+                  ? BoxShape.rectangle
+                  : BoxShape.circle,
               borderRadius: (isRectangle ?? false)
                   ? BorderRadius.circular(radius ?? 0)
                   : null,
               border: (withBorder ?? false)
                   ? Border.all(
-                      color: Theme.of(context).colorScheme.primary, width: 3.5)
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 3.5,
+                    )
                   : null,
               image: DecorationImage(
                 image: imageProvider,
@@ -75,11 +80,13 @@ Widget customCachedImage({
                 border: (withBorder ?? false)
                     ? Border.all(
                         color: Theme.of(context).colorScheme.primary,
-                        width: 3.5)
+                        width: 3.5,
+                      )
                     : null,
                 image: DecorationImage(
                   image: NetworkImage(
-                      "$url${(isDrive ?? false) ? "=w100-h100-p-k-rw-v1-nu-iv1" : ""}"),
+                    "$url${(isDrive ?? false) ? "=w100-h100-p-k-rw-v1-nu-iv1" : ""}",
+                  ),
                   fit: BoxFit.cover,
                 ),
               ),

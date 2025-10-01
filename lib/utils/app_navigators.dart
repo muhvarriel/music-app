@@ -8,10 +8,8 @@ void pageBack() => Navigator.of(Get.context!).pop();
 void pageBackWithResult(dynamic result) =>
     Navigator.of(Get.context!).pop(result);
 
-void pageOpen(Widget page) => Navigator.push(
-      Get.context!,
-      MaterialPageRoute(builder: (context) => page),
-    );
+void pageOpen(Widget page) =>
+    Navigator.push(Get.context!, MaterialPageRoute(builder: (context) => page));
 
 Future<dynamic> pageOpenWithResult(Widget page) async {
   return await Navigator.push(
@@ -21,10 +19,10 @@ Future<dynamic> pageOpenWithResult(Widget page) async {
 }
 
 void pageOpenAndRemovePrevious(Widget page) => Navigator.pushAndRemoveUntil(
-      Get.context!,
-      MaterialPageRoute(builder: (context) => page),
-      ModalRoute.withName(''),
-    );
+  Get.context!,
+  MaterialPageRoute(builder: (context) => page),
+  ModalRoute.withName(''),
+);
 
 String formatDate(String format, {String? date}) =>
     DateFormat(format).format(DateTime.tryParse(date ?? "") ?? DateTime.now());

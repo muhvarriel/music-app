@@ -67,17 +67,21 @@ class _SplashScreenState extends State<SplashScreen> {
             padding: screenWidth > 600
                 ? EdgeInsets.symmetric(
                     horizontal: screenWidth / ((screenWidth > 1028) ? 3 : 4),
-                    vertical: 30)
+                    vertical: 30,
+                  )
                 : EdgeInsets.zero,
             decoration: BoxDecoration(
-                color: isLoading
-                    ? const Color(0xFFF0F9FD)
-                    : Theme.of(context).cardColor),
+              color: isLoading
+                  ? const Color(0xFFF0F9FD)
+                  : Theme.of(context).cardColor,
+            ),
             child: ClipRRect(
-                borderRadius: screenWidth > 600
-                    ? BorderRadius.circular(20)
-                    : BorderRadius.zero,
-                child: _buildSplash()))
+              borderRadius: screenWidth > 600
+                  ? BorderRadius.circular(20)
+                  : BorderRadius.zero,
+              child: _buildSplash(),
+            ),
+          )
         : _buildSplash();
   }
 
@@ -85,18 +89,21 @@ class _SplashScreenState extends State<SplashScreen> {
     return isLoading
         ? Container(
             decoration: const BoxDecoration(
-                color: Color(0xFFF0F9FD),
-                image: DecorationImage(
-                    image: AssetImage("assets/icons/logo.png"),
-                    fit: BoxFit.fitWidth)),
+              color: Color(0xFFF0F9FD),
+              image: DecorationImage(
+                image: AssetImage("assets/icons/logo.png"),
+                fit: BoxFit.fitWidth,
+              ),
+            ),
           )
         : Container(
             color: Theme.of(context).scaffoldBackgroundColor,
             padding: EdgeInsets.fromLTRB(
-                16,
-                MediaQuery.viewPaddingOf(context).top + 16,
-                16,
-                MediaQuery.viewPaddingOf(context).bottom + 16),
+              16,
+              MediaQuery.viewPaddingOf(context).top + 16,
+              16,
+              MediaQuery.viewPaddingOf(context).bottom + 16,
+            ),
             child: Column(
               children: [
                 Expanded(child: Container()),
@@ -129,15 +136,16 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
         const SizedBox(height: 32),
         ButtonWidget(
-            label: "Get Started",
-            textColor: isDark ? Colors.white : Colors.grey.shade900,
-            borderColor: isDark ? Colors.white : Colors.grey.shade900,
-            backgroundColor: isDark ? Colors.black12 : Colors.white,
-            onPressed: () {
-              HapticFeedback.lightImpact();
+          label: "Get Started",
+          textColor: isDark ? Colors.white : Colors.grey.shade900,
+          borderColor: isDark ? Colors.white : Colors.grey.shade900,
+          backgroundColor: isDark ? Colors.black12 : Colors.white,
+          onPressed: () {
+            HapticFeedback.lightImpact();
 
-              pageOpenAndRemovePrevious(const DifferentOfWebScreen());
-            }),
+            pageOpenAndRemovePrevious(const DifferentOfWebScreen());
+          },
+        ),
       ],
     );
   }
@@ -179,15 +187,16 @@ class _DifferentOfWebScreenState extends State<DifferentOfWebScreen> {
                   ),
                   const SizedBox(width: 30),
                   Expanded(
-                      child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: const Center(
-                      child: CustomText(
-                        text: "Start a message",
-                        fontWeight: FontWeight.bold,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: const Center(
+                        child: CustomText(
+                          text: "Start a message",
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  )),
+                  ),
                 ],
               ),
             ),
@@ -210,9 +219,7 @@ class _MainPageState extends State<MainPage>
     const HomeScreen(),
     Container(
       color: Colors.white,
-      child: const Center(
-        child: CustomText(text: "Profile Page"),
-      ),
+      child: const Center(child: CustomText(text: "Profile Page")),
     ),
   ];
 

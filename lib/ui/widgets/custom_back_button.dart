@@ -21,20 +21,17 @@ class CustomBackButton extends StatelessWidget {
     return Padding(
       padding: padding ?? const EdgeInsets.all(8.0),
       child: IconButton(
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minHeight: 0, minWidth: 0),
-          icon: Icon(
-            Icons.arrow_back_ios,
-            size: 20,
-            color: color,
-          ),
-          onPressed: isEnable!
-              ? pageCustom ??
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minHeight: 0, minWidth: 0),
+        icon: Icon(Icons.arrow_back_ios, size: 20, color: color),
+        onPressed: isEnable!
+            ? pageCustom ??
                   () {
                     HapticFeedback.lightImpact();
                     pageBack();
                   }
-              : null),
+            : null,
+      ),
     );
   }
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-String apiKey = "AIzaSyDcPsH1JzCRfGLGNkqDHfvEAZaNavGmTHQ";
-
 ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   cardColor: Colors.grey.shade100,

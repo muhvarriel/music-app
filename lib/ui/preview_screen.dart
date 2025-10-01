@@ -1,16 +1,13 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:music_app/model/track.dart';
+import 'package:music_app/repository/music_repo.dart';
 import 'package:music_app/ui/widgets/animated_widget.dart';
-import 'package:music_app/ui/widgets/button_widget.dart';
 import 'package:music_app/ui/widgets/custom_cached_image.dart';
 import 'package:music_app/ui/widgets/custom_text.dart';
 import 'package:music_app/ui/widgets/fadingpageview/fadingpageview.dart';
 import 'package:music_app/utils/app_navigators.dart';
-import 'package:music_app/utils/music_storage.dart';
 
 class PreviewScreen extends StatefulWidget {
   final List<Tracks> listTrack;
@@ -27,6 +24,7 @@ class _PreviewScreenState extends State<PreviewScreen>
   int index = 0;
 
   final player = AudioPlayer();
+  List<String?> listPreview = [];
 
   @override
   void initState() {
@@ -36,8 +34,19 @@ class _PreviewScreenState extends State<PreviewScreen>
 
   void init() async {
     _pageController = FadingPageViewController(0, widget.listTrack.length);
-    await player.play(UrlSource(
-        widget.listTrack.firstOrNull?.previewUrl ?? 'https://foo.com/bar.mp3'));
+
+    for (var track in widget.listTrack) {
+      final previewUrl = await MusicRepo.getSpotifyPreviewUrl(track.id ?? "");
+      if (previewUrl?.isNotEmpty ?? false) {
+        listPreview.add(previewUrl);
+      }
+    }
+
+    if (listPreview.isNotEmpty) {
+      await player.play(
+        UrlSource(listPreview.firstOrNull ?? 'https://foo.com/bar.mp3'),
+      );
+    }
   }
 
   @override
@@ -50,21 +59,23 @@ class _PreviewScreenState extends State<PreviewScreen>
     return Stack(
       children: [
         Hero(
-          tag: widget.listTrack.firstOrNull?.album?.images?.firstOrNull?.url ??
+          tag:
+              widget.listTrack.firstOrNull?.album?.images?.firstOrNull?.url ??
               "",
           child: customCachedImage(
-              width: double.infinity,
-              height: double.infinity,
-              radius: 0,
-              isRectangle: true,
-              url:
-                  widget.listTrack[index].album?.images?.firstOrNull?.url ?? "",
-              isDrive: false,
-              isBlack: true),
+            width: double.infinity,
+            height: double.infinity,
+            radius: 0,
+            isRectangle: true,
+            url: widget.listTrack[index].album?.images?.firstOrNull?.url ?? "",
+            isDrive: false,
+            isBlack: true,
+          ),
         ),
         Container(
           padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.sizeOf(context).width / 10),
+            horizontal: MediaQuery.sizeOf(context).width / 10,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -74,11 +85,11 @@ class _PreviewScreenState extends State<PreviewScreen>
                 child: customCachedImage(
                   width: 75,
                   height: 75,
-                  radius: 15,
+                  radius: 20,
                   isRectangle: true,
                   url:
                       widget.listTrack[index].album?.images?.firstOrNull?.url ??
-                          "",
+                      "",
                   isDrive: false,
                 ),
               ),
@@ -99,26 +110,16 @@ class _PreviewScreenState extends State<PreviewScreen>
                     ),
                     const SizedBox(height: 3),
                     AnimatedCustomWidget(
-                      offset: const Offset(-0.3, 0),
+                      offset: const Offset(-0.35, 0),
                       child: CustomText(
-                        text: widget.listTrack[index].artists
+                        text:
+                            widget.listTrack[index].artists
                                 ?.map((e) => e.name ?? "-")
                                 .join(", ") ??
                             "-",
                         color: Colors.white,
                         fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    AnimatedCustomWidget(
-                      offset: const Offset(-0.3, 0),
-                      child: CustomText(
-                        text: formatMilliseconds(
-                            widget.listTrack[index].durationMs ?? 0),
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -150,9 +151,11 @@ class _PreviewScreenState extends State<PreviewScreen>
                           : screenWidth) /
                       2)) {
                 if (index > 0) {
-                  await player.play(UrlSource(
-                      widget.listTrack[index - 1].previewUrl ??
-                          'https://foo.com/bar.mp3'));
+                  await player.play(
+                    UrlSource(
+                      listPreview[index - 1] ?? 'https://foo.com/bar.mp3',
+                    ),
+                  );
 
                   setState(() {
                     index--;
@@ -162,9 +165,11 @@ class _PreviewScreenState extends State<PreviewScreen>
                 }
               } else {
                 if (index < lastIndex) {
-                  await player.play(UrlSource(
-                      widget.listTrack[index + 1].previewUrl ??
-                          'https://foo.com/bar.mp3'));
+                  await player.play(
+                    UrlSource(
+                      listPreview[index + 1] ?? 'https://foo.com/bar.mp3',
+                    ),
+                  );
 
                   setState(() {
                     index++;
@@ -205,19 +210,24 @@ class _PreviewScreenState extends State<PreviewScreen>
                                   borderRadius: BorderRadius.circular(100),
                                   child: TweenAnimationBuilder<double>(
                                     tween: Tween(
-                                        begin: 0, end: i == index ? 1 : 0),
+                                      begin: 0,
+                                      end: i == index ? 1 : 0,
+                                    ),
                                     duration: Duration(
-                                        milliseconds: i == index ? 7500 : 0),
+                                      milliseconds: i == index ? 7500 : 0,
+                                    ),
                                     curve: Curves.linear,
                                     onEnd: () async {
                                       if (i == lastIndex &&
                                           index == lastIndex) {
                                         pageBack();
                                       } else if (i == index && i != lastIndex) {
-                                        await player.play(UrlSource(widget
-                                                .listTrack[index + 1]
-                                                .previewUrl ??
-                                            'https://foo.com/bar.mp3'));
+                                        await player.play(
+                                          UrlSource(
+                                            listPreview[index + 1] ??
+                                                'https://foo.com/bar.mp3',
+                                          ),
+                                        );
 
                                         setState(() {
                                           index++;
@@ -226,17 +236,22 @@ class _PreviewScreenState extends State<PreviewScreen>
                                         _pageController.next();
                                       }
                                     },
-                                    builder: (BuildContext context,
-                                        double value, Widget? child) {
-                                      return LinearProgressIndicator(
-                                        minHeight: 3,
-                                        value: index > i ? 1 : value,
-                                        backgroundColor: Colors.grey.shade300,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary,
-                                      );
-                                    },
+                                    builder:
+                                        (
+                                          BuildContext context,
+                                          double value,
+                                          Widget? child,
+                                        ) {
+                                          return LinearProgressIndicator(
+                                            minHeight: 3,
+                                            value: index > i ? 1 : value,
+                                            backgroundColor:
+                                                Colors.grey.shade300,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                          );
+                                        },
                                   ),
                                 ),
                               ),

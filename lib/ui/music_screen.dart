@@ -76,7 +76,8 @@ class _MusicScreenState extends State<MusicScreen> {
   double opacityBorder = 0;
 
   Future<void> snapScroll() async {
-    final double maxTitleOffset = 300 -
+    final double maxTitleOffset =
+        300 -
         (dummyAppBar.preferredSize.height +
             MediaQuery.viewPaddingOf(context).top);
     const double snapThreshold = 10;
@@ -100,8 +101,11 @@ class _MusicScreenState extends State<MusicScreen> {
     if (isSnap && !isAnimate) {
       isSnap = false;
       isAnimate = true;
-      await _scrollController.animateTo(targetOffset,
-          duration: const Duration(milliseconds: 100), curve: Curves.easeOut);
+      await _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
       isAnimate = false;
     }
   }
@@ -127,6 +131,7 @@ class _MusicScreenState extends State<MusicScreen> {
       }
     });
 
+    /*
     await MusicRepo.getArtists(widget.artist.id ?? "").then((value) {
       if (value[0] == 200) {
         if (mounted) {
@@ -136,21 +141,23 @@ class _MusicScreenState extends State<MusicScreen> {
         }
       }
     });
+    */
 
-    CacheArtist? cacheArtist = MusicStorage.cacheArtist
-        .firstWhereOrNull((e) => e.id == widget.artist.id);
+    CacheArtist? cacheArtist = MusicStorage.cacheArtist.firstWhereOrNull(
+      (e) => e.id == widget.artist.id,
+    );
 
-    if (cacheArtist != null) {
+    if (cacheArtist?.about?.isNotEmpty ?? false) {
       if (mounted) {
         setState(() {
-          description = cacheArtist.about;
+          description = cacheArtist?.about;
         });
       }
     } else {
       await UserRepo.generateContent(
-              text:
-                  "Tell me about artist ${widget.artist.name ?? ""}, for more information genre is ${widget.artist.genres?.join(", ") ?? ""} and album is ${_artistAlbumResponse?.items?.map((e) => e.name).toList().join(", ")} and music is ${listTrack.map((e) => e.name).toList().join(", ")} in one paragraph so user can easy to read it")
-          .then((value) async {
+        text:
+            "Tell me about artist ${widget.artist.name ?? ""}, for more information genre is ${widget.artist.genres?.join(", ") ?? ""} and album is ${_artistAlbumResponse?.items?.map((e) => e.name).toList().join(", ")} and music is ${listTrack.map((e) => e.name).toList().join(", ")} in one paragraph so user can easy to read it",
+      ).then((value) async {
         if (mounted) {
           setState(() {
             description = value;
@@ -158,20 +165,23 @@ class _MusicScreenState extends State<MusicScreen> {
         }
 
         await MusicStorage.addArtistAbout(
-            CacheArtist(id: widget.artist.id, about: value));
+          CacheArtist(id: widget.artist.id, about: value),
+        );
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    List<Tracks> previewTrack = listTrack;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Theme.of(context)
-            .scaffoldBackgroundColor
-            .withOpacity(opacityBorder),
+        backgroundColor: Theme.of(
+          context,
+        ).scaffoldBackgroundColor.withOpacity(opacityBorder),
         title: Opacity(
           opacity: opacityBorder,
           child: CustomText(
@@ -189,7 +199,9 @@ class _MusicScreenState extends State<MusicScreen> {
               size: 30,
               isLiked: MusicStorage.favouriteArtist.contains(widget.artist.id),
               circleColor: const CircleColor(
-                  start: Colors.purple, end: Colors.deepPurple),
+                start: Colors.purple,
+                end: Colors.deepPurple,
+              ),
               bubblesColor: const BubblesColor(
                 dotPrimaryColor: Colors.purple,
                 dotSecondaryColor: Colors.deepPurple,
@@ -226,10 +238,12 @@ class _MusicScreenState extends State<MusicScreen> {
             tag: widget.artist.images?.firstOrNull?.url ?? "",
             child: customCachedImage(
               width: double.infinity,
-              height: (300 - (offset > 0 ? offset : 0)).clamp(
-                      dummyAppBar.preferredSize.height +
-                          MediaQuery.viewPaddingOf(context).top,
-                      300) +
+              height:
+                  (300 - (offset > 0 ? offset : 0)).clamp(
+                    dummyAppBar.preferredSize.height +
+                        MediaQuery.viewPaddingOf(context).top,
+                    300,
+                  ) +
                   (offset < 0 ? (offset * -1) : 0),
               isRectangle: true,
               url: widget.artist.images?.firstOrNull?.url ?? "",
@@ -257,10 +271,13 @@ class _MusicScreenState extends State<MusicScreen> {
                   padding: const EdgeInsets.all(16),
                   child: CustomText(
                     text: widget.artist.name ?? "",
-                    fontSize: 40 +
+                    fontSize:
+                        40 +
                         (_scrollController.hasClients
-                            ? ((-1 * _scrollController.offset) / 40)
-                                .clamp(0, 20)
+                            ? ((-1 * _scrollController.offset) / 40).clamp(
+                                0,
+                                20,
+                              )
                             : 0),
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -269,8 +286,7 @@ class _MusicScreenState extends State<MusicScreen> {
                 Column(
                   children: [
                     const SizedBox(height: 16),
-                    if (listTrack.isNotEmpty &&
-                        !listTrack.any((e) => e.previewUrl == null))
+                    if (previewTrack.isNotEmpty)
                       GestureDetector(
                         onTap: () async {
                           HapticFeedback.lightImpact();
@@ -280,10 +296,12 @@ class _MusicScreenState extends State<MusicScreen> {
                           });
 
                           await Future.delayed(
-                              const Duration(milliseconds: 750));
+                            const Duration(milliseconds: 750),
+                          );
 
                           await pageOpenWithResult(
-                              PreviewScreen(listTrack: listTrack));
+                            PreviewScreen(listTrack: previewTrack),
+                          );
 
                           setState(() {
                             valuePreview = 1;
@@ -303,16 +321,26 @@ class _MusicScreenState extends State<MusicScreen> {
                               Stack(
                                 children: [
                                   Hero(
-                                    tag: listTrack.firstOrNull?.album?.images
-                                            ?.firstOrNull?.url ??
+                                    tag:
+                                        previewTrack
+                                            .firstOrNull
+                                            ?.album
+                                            ?.images
+                                            ?.firstOrNull
+                                            ?.url ??
                                         "",
                                     child: customCachedImage(
                                       width: 36,
                                       height: 36,
                                       radius: 100,
                                       isRectangle: true,
-                                      url: listTrack.firstOrNull?.album?.images
-                                              ?.firstOrNull?.url ??
+                                      url:
+                                          previewTrack
+                                              .firstOrNull
+                                              ?.album
+                                              ?.images
+                                              ?.firstOrNull
+                                              ?.url ??
                                           "",
                                       isDrive: false,
                                     ),
@@ -321,7 +349,8 @@ class _MusicScreenState extends State<MusicScreen> {
                                     width: 36,
                                     height: 36,
                                     child: CircularProgressIndicator(
-                                        value: valuePreview),
+                                      value: valuePreview,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -349,80 +378,86 @@ class _MusicScreenState extends State<MusicScreen> {
                         SizedBox(
                           height: 200,
                           child: ListView.builder(
-                              itemCount:
-                                  _artistAlbumResponse?.items?.length ?? 0,
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              itemBuilder: (context, index) {
-                                var album = _artistAlbumResponse?.items?[index];
+                            itemCount: _artistAlbumResponse?.items?.length ?? 0,
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              var album = _artistAlbumResponse?.items?[index];
 
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                      left: index == 0 ? 16 : 0, right: 16),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      showAlbum(album);
-                                    },
-                                    child: Stack(
-                                      alignment: Alignment.bottomCenter,
-                                      children: [
-                                        customCachedImage(
-                                          width: 200,
-                                          height: 200,
-                                          radius: 20,
-                                          isRectangle: true,
-                                          url:
-                                              album?.images?.firstOrNull?.url ??
-                                                  "",
-                                          isDrive: false,
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  left: index == 0 ? 16 : 0,
+                                  right: 16,
+                                ),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    showAlbum(album);
+                                  },
+                                  child: Stack(
+                                    alignment: Alignment.bottomCenter,
+                                    children: [
+                                      customCachedImage(
+                                        width: 200,
+                                        height: 200,
+                                        radius: 20,
+                                        isRectangle: true,
+                                        url:
+                                            album?.images?.firstOrNull?.url ??
+                                            "",
+                                        isDrive: false,
+                                      ),
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.only(
+                                          bottomLeft: Radius.circular(20),
+                                          bottomRight: Radius.circular(20),
                                         ),
-                                        ClipRRect(
-                                          borderRadius: const BorderRadius.only(
-                                              bottomLeft: Radius.circular(20),
-                                              bottomRight: Radius.circular(20)),
-                                          child: BackdropFilter(
-                                            filter: ImageFilter.blur(
-                                                sigmaX: 10.0, sigmaY: 10.0),
-                                            child: Container(
-                                              width: 200,
-                                              height: 60,
-                                              padding: const EdgeInsets.all(10),
-                                              color: Colors.grey.shade800
-                                                  .withOpacity(0.5),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  CustomText(
-                                                    text: album?.name ?? "",
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w800,
-                                                    color: Colors.white,
+                                        child: BackdropFilter(
+                                          filter: ImageFilter.blur(
+                                            sigmaX: 10.0,
+                                            sigmaY: 10.0,
+                                          ),
+                                          child: Container(
+                                            width: 200,
+                                            height: 60,
+                                            padding: const EdgeInsets.all(10),
+                                            color: Colors.grey.shade800
+                                                .withOpacity(0.5),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                CustomText(
+                                                  text: album?.name ?? "",
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Colors.white,
+                                                ),
+                                                CustomText(
+                                                  text: formatDate(
+                                                    "d MMMM y",
+                                                    date: album?.releaseDate,
                                                   ),
-                                                  CustomText(
-                                                    text: formatDate("d MMMM y",
-                                                        date:
-                                                            album?.releaseDate),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white,
-                                                  ),
-                                                ],
-                                              ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              }),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -438,34 +473,35 @@ class _MusicScreenState extends State<MusicScreen> {
                         ),
                         const SizedBox(height: 4),
                         ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: listTrack.length,
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            itemBuilder: (context, index) {
-                              var track = listTrack[index];
+                          shrinkWrap: true,
+                          itemCount: listTrack.length,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          itemBuilder: (context, index) {
+                            var track = listTrack[index];
 
-                              return TrackPreview(
-                                tracks: track,
-                                player: player,
-                                idPlayer: idPlayer,
-                                isAlbum: true,
-                                onTap: () {
-                                  if (mounted) {
-                                    setState(() {
-                                      idPlayer = track.id;
-                                    });
-                                  }
-                                },
-                                onEnd: () {
-                                  if (mounted) {
-                                    setState(() {
-                                      idPlayer = null;
-                                    });
-                                  }
-                                },
-                              );
-                            }),
+                            return TrackPreview(
+                              tracks: track,
+                              player: player,
+                              idPlayer: idPlayer,
+                              isAlbum: true,
+                              onTap: () {
+                                if (mounted) {
+                                  setState(() {
+                                    idPlayer = track.id;
+                                  });
+                                }
+                              },
+                              onEnd: () {
+                                if (mounted) {
+                                  setState(() {
+                                    idPlayer = null;
+                                  });
+                                }
+                              },
+                            );
+                          },
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -502,6 +538,7 @@ class _MusicScreenState extends State<MusicScreen> {
                         ],
                       ),
                     ),
+                    /*
                     const SizedBox(height: 16),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,144 +553,155 @@ class _MusicScreenState extends State<MusicScreen> {
                         SizedBox(
                           height: 150,
                           child: ListView.builder(
-                              itemCount: relatedArtist.length,
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              itemBuilder: (context, index) {
-                                var artist = relatedArtist[index];
+                            itemCount: relatedArtist.length,
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              var artist = relatedArtist[index];
 
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                      left: index == 0 ? 16 : 0, right: 16),
-                                  child: GestureDetector(
-                                    onTap: () async {
-                                      HapticFeedback.lightImpact();
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  left: index == 0 ? 16 : 0,
+                                  right: 16,
+                                ),
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    HapticFeedback.lightImpact();
 
-                                      if (mounted) {
-                                        setState(() {
-                                          idPlayer = null;
-                                          player.stop();
-                                        });
-                                      }
+                                    if (mounted) {
+                                      setState(() {
+                                        idPlayer = null;
+                                        player.stop();
+                                      });
+                                    }
 
-                                      await pageOpenWithResult(
-                                          MusicScreen(artist: artist));
+                                    await pageOpenWithResult(
+                                      MusicScreen(artist: artist),
+                                    );
 
-                                      setState(() {});
-                                    },
-                                    child: Stack(
-                                      children: [
-                                        customCachedImage(
-                                          width: 150,
-                                          height: 150,
-                                          radius: 25,
-                                          isRectangle: true,
-                                          url:
-                                              artist.images?.firstOrNull?.url ??
-                                                  "",
-                                          isDrive: false,
-                                        ),
-                                        Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            MusicStorage.favouriteArtist
-                                                    .contains(artist.id)
-                                                ? SizedBox(
-                                                    width: 150,
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment.end,
-                                                      children: [
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  right: 6,
-                                                                  top: 6),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        100),
-                                                            child:
-                                                                BackdropFilter(
-                                                              filter: ImageFilter
-                                                                  .blur(
-                                                                      sigmaX:
-                                                                          10.0,
-                                                                      sigmaY:
-                                                                          10.0),
-                                                              child: Container(
-                                                                width: 35,
-                                                                height: 35,
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .fromLTRB(
-                                                                        5,
-                                                                        5,
-                                                                        5,
-                                                                        3),
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade800
-                                                                    .withOpacity(
-                                                                        0.5),
-                                                                child:
-                                                                    const Icon(
-                                                                  Icons
-                                                                      .favorite_rounded,
-                                                                  color: Colors
-                                                                      .red,
+                                    setState(() {});
+                                  },
+                                  child: Stack(
+                                    children: [
+                                      customCachedImage(
+                                        width: 150,
+                                        height: 150,
+                                        radius: 25,
+                                        isRectangle: true,
+                                        url:
+                                            artist.images?.firstOrNull?.url ??
+                                            "",
+                                        isDrive: false,
+                                      ),
+                                      Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          MusicStorage.favouriteArtist.contains(
+                                                artist.id,
+                                              )
+                                              ? SizedBox(
+                                                  width: 150,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              right: 6,
+                                                              top: 6,
+                                                            ),
+                                                        child: ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                100,
+                                                              ),
+                                                          child: BackdropFilter(
+                                                            filter:
+                                                                ImageFilter.blur(
+                                                                  sigmaX: 10.0,
+                                                                  sigmaY: 10.0,
                                                                 ),
+                                                            child: Container(
+                                                              width: 35,
+                                                              height: 35,
+                                                              padding:
+                                                                  const EdgeInsets.fromLTRB(
+                                                                    5,
+                                                                    5,
+                                                                    5,
+                                                                    3,
+                                                                  ),
+                                                              color: Colors
+                                                                  .grey
+                                                                  .shade800
+                                                                  .withOpacity(
+                                                                    0.5,
+                                                                  ),
+                                                              child: const Icon(
+                                                                Icons
+                                                                    .favorite_rounded,
+                                                                color:
+                                                                    Colors.red,
                                                               ),
                                                             ),
                                                           ),
                                                         ),
-                                                      ],
-                                                    ),
-                                                  )
-                                                : const SizedBox(),
-                                            ClipRRect(
-                                              borderRadius:
-                                                  const BorderRadius.only(
-                                                      bottomLeft:
-                                                          Radius.circular(25),
-                                                      bottomRight:
-                                                          Radius.circular(25)),
-                                              child: BackdropFilter(
-                                                filter: ImageFilter.blur(
-                                                    sigmaX: 10.0, sigmaY: 10.0),
-                                                child: Container(
-                                                  width: 150,
-                                                  height: 40,
-                                                  padding:
-                                                      const EdgeInsets.all(10),
-                                                  color: Colors.grey.shade800
-                                                      .withOpacity(0.5),
-                                                  alignment: Alignment.center,
-                                                  child: CustomText(
-                                                    text: artist.name ?? "",
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w800,
-                                                    color: Colors.white,
-                                                    textAlign: TextAlign.center,
+                                                      ),
+                                                    ],
                                                   ),
+                                                )
+                                              : const SizedBox(),
+                                          ClipRRect(
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                                  bottomLeft: Radius.circular(
+                                                    25,
+                                                  ),
+                                                  bottomRight: Radius.circular(
+                                                    25,
+                                                  ),
+                                                ),
+                                            child: BackdropFilter(
+                                              filter: ImageFilter.blur(
+                                                sigmaX: 10.0,
+                                                sigmaY: 10.0,
+                                              ),
+                                              child: Container(
+                                                width: 150,
+                                                height: 40,
+                                                padding: const EdgeInsets.all(
+                                                  10,
+                                                ),
+                                                color: Colors.grey.shade800
+                                                    .withOpacity(0.5),
+                                                alignment: Alignment.center,
+                                                child: CustomText(
+                                                  text: artist.name ?? "",
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Colors.white,
+                                                  textAlign: TextAlign.center,
                                                 ),
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                );
-                              }),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ],
                     ),
+                    */
                     SizedBox(
-                        height: 16 + MediaQuery.viewPaddingOf(context).bottom),
+                      height: 16 + MediaQuery.viewPaddingOf(context).bottom,
+                    ),
                   ],
                 ),
               ],
@@ -682,12 +730,13 @@ class _MusicScreenState extends State<MusicScreen> {
     String? aboutAlbum;
 
     showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        showDragHandle: true,
-        enableDrag: true,
-        builder: (context) {
-          return StatefulBuilder(builder: (context, setState) {
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      enableDrag: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
             if (initial) {
               initial = false;
 
@@ -708,17 +757,18 @@ class _MusicScreenState extends State<MusicScreen> {
                     }
                   } else {
                     await UserRepo.generateContent(
-                            text:
-                                "Tell me about album ${selectedAlbum?.name ?? ""} by ${selectedAlbum?.artists?.map((e) => e.name).toList().join(", ") ?? ""}, for more information genre is ${widget.artist.genres?.join(", ") ?? ""} and music is ${selectedAlbumTrack.map((e) => "${e.name ?? ""} by ${e.artists?.map((r) => r.name).toList().join(", ") ?? ""}").toList().join(", ")} release on ${formatDate("d MMMM y", date: selectedAlbum?.releaseDate)} in one paragraph so user can easy to read it")
-                        .then((valueAbout) async {
+                      text:
+                          "Tell me about album ${selectedAlbum?.name ?? ""} by ${selectedAlbum?.artists?.map((e) => e.name).toList().join(", ") ?? ""}, for more information genre is ${widget.artist.genres?.join(", ") ?? ""} and music is ${selectedAlbumTrack.map((e) => "${e.name ?? ""} by ${e.artists?.map((r) => r.name).toList().join(", ") ?? ""}").toList().join(", ")} release on ${formatDate("d MMMM y", date: selectedAlbum?.releaseDate)} in one paragraph so user can easy to read it",
+                    ).then((valueAbout) async {
                       if (mounted) {
                         setState(() {
                           aboutAlbum = valueAbout;
                         });
                       }
 
-                      await MusicStorage.addAlbumAbout(CacheArtist(
-                          id: selectedAlbum?.id, about: valueAbout));
+                      await MusicStorage.addAlbumAbout(
+                        CacheArtist(id: selectedAlbum?.id, about: valueAbout),
+                      );
                     });
                   }
                 });
@@ -766,7 +816,8 @@ class _MusicScreenState extends State<MusicScreen> {
                         ),
                         const SizedBox(height: 2),
                         CustomText(
-                          text: selectedAlbum?.artists
+                          text:
+                              selectedAlbum?.artists
                                   ?.map((e) => e.name ?? "")
                                   .toList()
                                   .join(", ") ??
@@ -796,33 +847,34 @@ class _MusicScreenState extends State<MusicScreen> {
                     ),
                     const SizedBox(height: 10),
                     ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: selectedAlbumTrack.length,
-                        padding: EdgeInsets.zero,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          var track = selectedAlbumTrack[index];
+                      shrinkWrap: true,
+                      itemCount: selectedAlbumTrack.length,
+                      padding: EdgeInsets.zero,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        var track = selectedAlbumTrack[index];
 
-                          return TrackPreview(
-                            tracks: track,
-                            player: player,
-                            idPlayer: idPlayer,
-                            onTap: () {
-                              if (mounted) {
-                                setState(() {
-                                  idPlayer = track.id;
-                                });
-                              }
-                            },
-                            onEnd: () {
-                              if (mounted) {
-                                setState(() {
-                                  idPlayer = null;
-                                });
-                              }
-                            },
-                          );
-                        }),
+                        return TrackPreview(
+                          tracks: track,
+                          player: player,
+                          idPlayer: idPlayer,
+                          onTap: () {
+                            if (mounted) {
+                              setState(() {
+                                idPlayer = track.id;
+                              });
+                            }
+                          },
+                          onEnd: () {
+                            if (mounted) {
+                              setState(() {
+                                idPlayer = null;
+                              });
+                            }
+                          },
+                        );
+                      },
+                    ),
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -841,8 +893,10 @@ class _MusicScreenState extends State<MusicScreen> {
                           ),
                           const SizedBox(height: 10),
                           CustomText(
-                            text: formatDate("EEEE, d MMMM y",
-                                date: selectedAlbum?.releaseDate),
+                            text: formatDate(
+                              "EEEE, d MMMM y",
+                              date: selectedAlbum?.releaseDate,
+                            ),
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -856,17 +910,22 @@ class _MusicScreenState extends State<MusicScreen> {
                       ),
                     ),
                     SizedBox(
-                        height: 16 + MediaQuery.viewPaddingOf(context).bottom),
+                      height: 16 + MediaQuery.viewPaddingOf(context).bottom,
+                    ),
                   ],
                 ),
               ),
             );
-          });
-        }).whenComplete(() => setState(() {
-          idPlayer = null;
-          selectedAlbumTrack.clear();
-          player.stop();
-        }));
+          },
+        );
+      },
+    ).whenComplete(
+      () => setState(() {
+        idPlayer = null;
+        selectedAlbumTrack.clear();
+        player.stop();
+      }),
+    );
   }
 }
 
@@ -879,15 +938,16 @@ class TrackPreview extends StatefulWidget {
   final EdgeInsets? padding;
   final bool? isAlbum;
 
-  const TrackPreview(
-      {super.key,
-      required this.tracks,
-      required this.player,
-      this.idPlayer,
-      required this.onTap,
-      required this.onEnd,
-      this.padding,
-      this.isAlbum});
+  const TrackPreview({
+    super.key,
+    required this.tracks,
+    required this.player,
+    this.idPlayer,
+    required this.onTap,
+    required this.onEnd,
+    this.padding,
+    this.isAlbum,
+  });
 
   @override
   State<TrackPreview> createState() => _TrackPreviewState();
@@ -916,8 +976,11 @@ class _TrackPreviewState extends State<TrackPreview> {
     return InkWell(
       onTap: () async {
         HapticFeedback.lightImpact();
+        final previewUrl = await MusicRepo.getSpotifyPreviewUrl(
+          widget.tracks.id ?? "",
+        );
 
-        if (widget.tracks.previewUrl != null) {
+        if (previewUrl?.isNotEmpty ?? false) {
           if (widget.idPlayer == widget.tracks.id) {
             if (widget.player.state == PlayerState.playing) {
               await widget.player.pause();
@@ -927,14 +990,16 @@ class _TrackPreviewState extends State<TrackPreview> {
           } else {
             widget.onTap();
 
-            await widget.player.play(UrlSource(
-                widget.tracks.previewUrl ?? 'https://foo.com/bar.mp3'));
+            await widget.player.play(
+              UrlSource(previewUrl ?? 'https://foo.com/bar.mp3'),
+            );
             widget.player.getDuration().then((value) => _duration = value);
           }
         }
       },
       child: Padding(
-        padding: widget.padding ??
+        padding:
+            widget.padding ??
             const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -957,31 +1022,34 @@ class _TrackPreviewState extends State<TrackPreview> {
                         height: 30,
                         alignment: Alignment.center,
                         child: CustomText(
-                            text: (widget.tracks.trackNumber ?? 0).toString())),
+                          text: (widget.tracks.trackNumber ?? 0).toString(),
+                        ),
+                      ),
                 if (widget.idPlayer == widget.tracks.id)
                   Center(
-                      child: Container(
-                          width:
-                              (widget.tracks.album?.images?.isNotEmpty ?? false)
-                                  ? 50
-                                  : 30,
-                          height:
-                              (widget.tracks.album?.images?.isNotEmpty ?? false)
-                                  ? 50
-                                  : 30,
-                          padding:
-                              (widget.tracks.album?.images?.isNotEmpty ?? false)
-                                  ? const EdgeInsets.all(14)
-                                  : EdgeInsets.zero,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            value: widget.player.state == PlayerState.playing ||
-                                    widget.player.state == PlayerState.paused
-                                ? ((_position?.inMilliseconds ?? 1) /
-                                        (_duration?.inMilliseconds ?? 1))
-                                    .clamp(0, 1)
-                                : null,
-                          )))
+                    child: Container(
+                      width: (widget.tracks.album?.images?.isNotEmpty ?? false)
+                          ? 50
+                          : 30,
+                      height: (widget.tracks.album?.images?.isNotEmpty ?? false)
+                          ? 50
+                          : 30,
+                      padding:
+                          (widget.tracks.album?.images?.isNotEmpty ?? false)
+                          ? const EdgeInsets.all(14)
+                          : EdgeInsets.zero,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        value:
+                            widget.player.state == PlayerState.playing ||
+                                widget.player.state == PlayerState.paused
+                            ? ((_position?.inMilliseconds ?? 1) /
+                                      (_duration?.inMilliseconds ?? 1))
+                                  .clamp(0, 1)
+                            : null,
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(width: 16),
@@ -999,10 +1067,10 @@ class _TrackPreviewState extends State<TrackPreview> {
                     text: (widget.isAlbum ?? false)
                         ? (widget.tracks.album?.name ?? "-")
                         : (widget.tracks.artists
-                                ?.map((e) => e.name ?? "")
-                                .toList()
-                                .join(", ") ??
-                            "-"),
+                                  ?.map((e) => e.name ?? "")
+                                  .toList()
+                                  .join(", ") ??
+                              "-"),
                     overflow: TextOverflow.ellipsis,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

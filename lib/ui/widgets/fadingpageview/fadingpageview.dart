@@ -20,7 +20,9 @@ class FadingPageViewController {
 
   /// Function to add a handler to a list
   void _addHandler(
-      List<_SetPageCallback> handlerList, _SetPageCallback handler) {
+    List<_SetPageCallback> handlerList,
+    _SetPageCallback handler,
+  ) {
     handlerList.add(handler);
   }
 
@@ -156,14 +158,15 @@ class FadingPageView extends StatefulWidget {
   ///   which page is being shown. It would have no sense to not to have a [controller] because
   ///   the page would not be ever changed.
   ///
-  const FadingPageView(
-      {required this.itemBuilder,
-      required this.controller,
-      this.onShown,
-      this.fadeInDuration = const Duration(milliseconds: 300),
-      this.fadeOutDuration = const Duration(milliseconds: 300),
-      this.disableWhileAnimating = false,
-      super.key});
+  const FadingPageView({
+    required this.itemBuilder,
+    required this.controller,
+    this.onShown,
+    this.fadeInDuration = const Duration(milliseconds: 300),
+    this.fadeOutDuration = const Duration(milliseconds: 300),
+    this.disableWhileAnimating = false,
+    super.key,
+  });
 
   @override
   State<FadingPageView> createState() => _FadingPageViewState();
@@ -209,14 +212,14 @@ class _FadingPageViewState extends State<FadingPageView> {
     }
 
     // Get the item to show
-    Widget child =
-        widget.itemBuilder(context, widget.controller._visiblePageNumber);
+    Widget child = widget.itemBuilder(
+      context,
+      widget.controller._visiblePageNumber,
+    );
 
     if ((widget.controller._state != FadingPageViewState.visible) &&
         (widget.disableWhileAnimating)) {
-      child = IgnorePointer(
-        child: child,
-      );
+      child = IgnorePointer(child: child);
     }
 
     switch (widget.controller._state) {
@@ -230,34 +233,36 @@ class _FadingPageViewState extends State<FadingPageView> {
       case FadingPageViewState.fadeIn:
         widget.controller._enabled = false;
         child = FadeAnimation(
-            duration: widget.fadeInDuration,
-            onShown: () {
-              widget.controller._state = FadingPageViewState.visible;
-              widget.controller._enabled = true;
-              if (widget.onShown != null) {
-                widget.onShown!.call();
-              }
-              _updateContent();
-            },
-            child: child);
+          duration: widget.fadeInDuration,
+          onShown: () {
+            widget.controller._state = FadingPageViewState.visible;
+            widget.controller._enabled = true;
+            if (widget.onShown != null) {
+              widget.onShown!.call();
+            }
+            _updateContent();
+          },
+          child: child,
+        );
         break;
       case FadingPageViewState.fadeOut:
         widget.controller._enabled = false;
         child = FadeAnimation(
-            duration: widget.fadeOutDuration,
-            onHidden: () {
-              widget.controller._state = FadingPageViewState.fadeIn;
-              widget.controller._visiblePageNumber =
-                  widget.controller._nextVisiblePageNumber;
-              // Not enabled, because it will be faded in
-              // widget.controller._enabled = true;
+          duration: widget.fadeOutDuration,
+          onHidden: () {
+            widget.controller._state = FadingPageViewState.fadeIn;
+            widget.controller._visiblePageNumber =
+                widget.controller._nextVisiblePageNumber;
+            // Not enabled, because it will be faded in
+            // widget.controller._enabled = true;
 
-              SchedulerBinding.instance.addPostFrameCallback((timestamp) {
-                _updateContent();
-              });
-            },
-            fadeIn: false,
-            child: child);
+            SchedulerBinding.instance.addPostFrameCallback((timestamp) {
+              _updateContent();
+            });
+          },
+          fadeIn: false,
+          child: child,
+        );
         break;
     }
 

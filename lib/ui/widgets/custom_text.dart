@@ -43,7 +43,8 @@ class CustomText extends StatelessWidget {
                   .replaceAll("* ", "")
                   .replaceAll("**", "")
                   .replaceAll("*", " "),
-              style: style ??
+              style:
+                  style ??
                   GoogleFonts.mulish(
                     color: color,
                     fontSize: fontSize,
@@ -59,7 +60,8 @@ class CustomText extends StatelessWidget {
                   .replaceAll("* ", "")
                   .replaceAll("**", "")
                   .replaceAll("*", " "),
-              style: style ??
+              style:
+                  style ??
                   GoogleFonts.mulish(
                     color: color,
                     fontSize: fontSize,
